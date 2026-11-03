@@ -1,0 +1,23 @@
+# Build output
+build/
+cmake-build-*/
+
+# Executables and object files
+*.exe
+*.o
+*.obj
+*.dll
+*.a
+
+# Local databases and SQLite files
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
