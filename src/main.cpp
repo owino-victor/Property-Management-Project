@@ -2,65 +2,20 @@
 #include <iostream>
 #include <string>
 #include <limits>
-#include <sqlite3.h>
+#include "Statement.h"
+#include "DatabaseManager.h"
 
 using namespace std;
 
-sqlite3* db = nullptr;
+DatabaseManager database;
 
 // ---------------- DATABASE HELPERS ----------------
 
 bool execute(const string& sql) {
-    char* error = nullptr;
-    int result = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &error);
-
-    if (result != SQLITE_OK) {
-        cerr << "Database error: " << (error ? error : "Unknown") << '\n';
-        sqlite3_free(error);
-        return false;
-    }
-    return true;
+    return database.execute(sql);
 }
 
-class Statement {
-public:
-    sqlite3_stmt* stmt = nullptr;
 
-    Statement(const string& sql) {
-        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            cerr << "Query error: " << sqlite3_errmsg(db) << '\n';
-        }
-    }
-
-    ~Statement() {
-        if (stmt) sqlite3_finalize(stmt);
-    }
-
-    void text(int index, const string& value) {
-        sqlite3_bind_text(stmt, index, value.c_str(), -1, SQLITE_TRANSIENT);
-    }
-
-    void number(int index, int value) {
-        sqlite3_bind_int(stmt, index, value);
-    }
-
-    bool next() {
-        return stmt && sqlite3_step(stmt) == SQLITE_ROW;
-    }
-
-    bool run() {
-        return stmt && sqlite3_step(stmt) == SQLITE_DONE;
-    }
-
-    string getText(int column) {
-        const unsigned char* value = sqlite3_column_text(stmt, column);
-        return value ? reinterpret_cast<const char*>(value) : "";
-    }
-
-    int getNumber(int column) {
-        return sqlite3_column_int(stmt, column);
-    }
-};
 
 string input(const string& prompt) {
     cout << prompt;
@@ -176,7 +131,7 @@ bool initializeDatabase() {
 void listHouses() {
     heading("HOUSE REGISTER");
 
-    Statement query(
+    Statement query(database.connection(), 
         "SELECT id,house_number,occupied FROM houses ORDER BY house_number"
     );
 
@@ -199,7 +154,7 @@ void addHouse() {
         return;
     }
 
-    Statement query("INSERT INTO houses(house_number) VALUES(?)");
+    Statement query(database.connection(), "INSERT INTO houses(house_number) VALUES(?)");
     query.text(1, number);
 
     if (query.run())
@@ -218,7 +173,7 @@ void assignTenant() {
 
     int houseId = choice("\nEnter vacant house ID: ");
 
-    Statement house("SELECT occupied FROM houses WHERE id=?");
+    Statement house(database.connection(), "SELECT occupied FROM houses WHERE id=?");
     house.number(1, houseId);
 
     if (!house.next() || house.getNumber(0) != 0) {
@@ -239,7 +194,7 @@ void assignTenant() {
     }
 
     // Prevent duplicate usernames, regardless of capitalization
-    Statement existing(
+    Statement existing(database.connection(), 
         "SELECT id FROM users WHERE username=? COLLATE NOCASE"
     );
     existing.text(1, username);
@@ -251,7 +206,7 @@ void assignTenant() {
 
     execute("BEGIN TRANSACTION");
 
-    Statement tenant(
+    Statement tenant(database.connection(), 
         "INSERT INTO tenants(house_id,name,phone) VALUES(?,?,?)"
     );
     tenant.number(1, houseId);
@@ -264,9 +219,9 @@ void assignTenant() {
         return;
     }
 
-    int tenantId = static_cast<int>(sqlite3_last_insert_rowid(db));
+    int tenantId = database.lastInsertRowId();
 
-    Statement user(
+    Statement user(database.connection(), 
         "INSERT INTO users(username,password,role,tenant_id) "
         "VALUES(?,?,'tenant',?)"
     );
@@ -280,7 +235,7 @@ void assignTenant() {
         return;
     }
 
-    Statement update("UPDATE houses SET occupied=1 WHERE id=?");
+    Statement update(database.connection(), "UPDATE houses SET occupied=1 WHERE id=?");
     update.number(1, houseId);
 
     if (!update.run()) {
@@ -310,7 +265,7 @@ void viewRequests(int tenantId = -1) {
 
     sql += " ORDER BY r.id DESC";
 
-    Statement query(sql);
+    Statement query(database.connection(), sql);
 
     if (tenantId != -1)
         query.number(1, tenantId);
@@ -349,7 +304,7 @@ void submitRequest(int tenantId) {
 
     string description = input("Describe your request: ");
 
-    Statement query(
+    Statement query(database.connection(), 
         "INSERT INTO requests(tenant_id,type,description) VALUES(?,?,?)"
     );
 
@@ -368,7 +323,7 @@ void updateRequest() {
 
     int id = choice("\nEnter request ID to update: ");
 
-    Statement check("SELECT id FROM requests WHERE id=?");
+    Statement check(database.connection(), "SELECT id FROM requests WHERE id=?");
     check.number(1, id);
 
     if (!check.next()) {
@@ -393,7 +348,7 @@ void updateRequest() {
             return;
     }
 
-    Statement update(
+    Statement update(database.connection(), 
         "UPDATE requests SET response=?,scheduled_at=?,status=? WHERE id=?"
     );
 
@@ -413,7 +368,7 @@ void submitFeedback(int tenantId) {
 
     string message = input("Your feedback: ");
 
-    Statement query(
+    Statement query(database.connection(), 
         "INSERT INTO feedback(tenant_id,message) VALUES(?,?)"
     );
 
@@ -427,7 +382,7 @@ void submitFeedback(int tenantId) {
 void viewFeedback() {
     heading("TENANT FEEDBACK");
 
-    Statement query(
+    Statement query(database.connection(), 
         "SELECT f.id,t.name,f.message,f.created_at "
         "FROM feedback f JOIN tenants t ON f.tenant_id=t.id "
         "ORDER BY f.id DESC"
@@ -448,7 +403,7 @@ void submitLeavingNotice(int tenantId) {
 
     string reason = input("Reason for leaving: ");
 
-    Statement query(
+    Statement query(database.connection(), 
         "INSERT INTO leaving_notices(tenant_id,reason) VALUES(?,?)"
     );
 
@@ -462,7 +417,7 @@ void submitLeavingNotice(int tenantId) {
 void viewNotices() {
     heading("LEAVING NOTICES");
 
-    Statement query(
+    Statement query(database.connection(), 
         "SELECT n.id,t.name,h.house_number,n.reason,"
         "n.notice_date,n.departure_date,n.status "
         "FROM leaving_notices n "
@@ -489,7 +444,7 @@ void completeDeparture() {
 
     int id = choice("\nEnter leaving notice ID: ");
 
-    Statement query(
+    Statement query(database.connection(), 
         "SELECT tenant_id FROM leaving_notices WHERE id=?"
     );
     query.number(1, id);
@@ -504,24 +459,24 @@ void completeDeparture() {
 
     execute("BEGIN TRANSACTION");
 
-    Statement notice(
+    Statement notice(database.connection(), 
         "UPDATE leaving_notices SET status='Completed',"
         "departure_date=? WHERE id=?"
     );
     notice.text(1, date);
     notice.number(2, id);
 
-    Statement tenant(
+    Statement tenant(database.connection(), 
         "UPDATE tenants SET active=0 WHERE id=?"
     );
     tenant.number(1, tenantId);
 
-    Statement account(
+    Statement account(database.connection(), 
         "UPDATE users SET active=0 WHERE tenant_id=?"
     );
     account.number(1, tenantId);
 
-    Statement house(
+    Statement house(database.connection(), 
         "UPDATE houses SET occupied=0 "
         "WHERE id=(SELECT house_id FROM tenants WHERE id=?)"
     );
@@ -541,7 +496,7 @@ void completeDeparture() {
 void ownerDashboard() {
     heading("OWNER DASHBOARD");
 
-    Statement houses(
+    Statement houses(database.connection(), 
         "SELECT COUNT(*),"
         "COALESCE(SUM(occupied),0),"
         "COUNT(*)-COALESCE(SUM(occupied),0) FROM houses"
@@ -553,17 +508,17 @@ void ownerDashboard() {
              << "\nVacant: " << houses.getNumber(2) << '\n';
     }
 
-    Statement tenants("SELECT COUNT(*) FROM tenants WHERE active=1");
+    Statement tenants(database.connection(), "SELECT COUNT(*) FROM tenants WHERE active=1");
     if (tenants.next())
         cout << "Active tenants: " << tenants.getNumber(0) << '\n';
 
-    Statement requests(
+    Statement requests(database.connection(), 
         "SELECT COUNT(*) FROM requests WHERE status!='Resolved'"
     );
     if (requests.next())
         cout << "Unresolved requests: " << requests.getNumber(0) << '\n';
 
-    Statement notices(
+    Statement notices(database.connection(), 
         "SELECT COUNT(*) FROM leaving_notices WHERE status='Submitted'"
     );
     if (notices.next())
@@ -576,7 +531,7 @@ void ownerDashboard() {
 void viewTenants() {
     heading("TENANT REGISTER");
 
-    Statement query(
+    Statement query(database.connection(), 
         "SELECT t.id,t.name,t.phone,h.house_number,t.active "
         "FROM tenants t JOIN houses h ON t.house_id=h.id "
         "ORDER BY t.id DESC"
@@ -600,7 +555,7 @@ bool login(string& role, int& tenantId) {
     string username = input("Username: ");
     string password = input("Password: ");
 
-    Statement query(
+    Statement query(database.connection(), 
         "SELECT role,tenant_id FROM users "
         "WHERE username=? COLLATE NOCASE AND password=? AND active=1"
     );
@@ -718,14 +673,13 @@ int main() {
     cout << "       PROPERTY MANAGEMENT SYSTEM\n";
     cout << "========================================\n";
 
-    if (sqlite3_open("database/property_management.db", &db) != SQLITE_OK) {
-        cerr << "Could not open database.\n";
-        return 1;
-    }
+    if (!database.connect("database/property_management.db")) {
+    cerr << "Could not open database.\n";
+    return 1;
+}
 
     if (!initializeDatabase()) {
         cerr << "Database initialization failed.\n";
-        sqlite3_close(db);
         return 1;
     }
 
@@ -752,7 +706,6 @@ int main() {
             running = false;
     }
 
-    sqlite3_close(db);
     cout << "\nThank you for using the system!\n";
 
     return 0;

@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.20)
 
 project(PropertyManagementSystem VERSION 1.0 LANGUAGES CXX)
@@ -11,6 +10,8 @@ find_package(SQLite3 REQUIRED)
 
 add_executable(PropertyManagementSystem
     src/main.cpp
+    src/DatabaseManager.cpp
+    src/Statement.cpp
 )
 
 target_include_directories(PropertyManagementSystem

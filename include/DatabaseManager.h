@@ -16,6 +16,10 @@ public:
     void close();
 
     bool isConnected() const;
+    bool execute(const std::string& sql) const;
+
+    sqlite3* connection() const;
+    int lastInsertRowId() const;
 };
 
 #endif
