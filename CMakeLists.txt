@@ -11,6 +11,7 @@ find_package(SQLite3 REQUIRED)
 
 add_executable(PropertyManagementSystem
     src/main.cpp
+    src/DatabaseManager.cpp
 )
 
 target_include_directories(PropertyManagementSystem

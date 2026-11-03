@@ -2,24 +2,16 @@
 #include <iostream>
 #include <string>
 #include <limits>
-#include <sqlite3.h>
+#include "DatabaseManager.h"
 
 using namespace std;
 
-sqlite3* db = nullptr;
+DatabaseManager database;
 
 // ---------------- DATABASE HELPERS ----------------
 
 bool execute(const string& sql) {
-    char* error = nullptr;
-    int result = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &error);
-
-    if (result != SQLITE_OK) {
-        cerr << "Database error: " << (error ? error : "Unknown") << '\n';
-        sqlite3_free(error);
-        return false;
-    }
-    return true;
+    return database.execute(sql);
 }
 
 class Statement {
@@ -27,10 +19,19 @@ public:
     sqlite3_stmt* stmt = nullptr;
 
     Statement(const string& sql) {
-        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            cerr << "Query error: " << sqlite3_errmsg(db) << '\n';
-        }
+    if (sqlite3_prepare_v2(
+            database.connection(),
+            sql.c_str(),
+            -1,
+            &stmt,
+            nullptr
+        ) != SQLITE_OK) {
+
+        cerr << "Query error: "
+             << sqlite3_errmsg(database.connection())
+             << '\n';
     }
+}
 
     ~Statement() {
         if (stmt) sqlite3_finalize(stmt);
@@ -264,7 +265,7 @@ void assignTenant() {
         return;
     }
 
-    int tenantId = static_cast<int>(sqlite3_last_insert_rowid(db));
+    int tenantId = database.lastInsertRowId();
 
     Statement user(
         "INSERT INTO users(username,password,role,tenant_id) "
@@ -718,14 +719,13 @@ int main() {
     cout << "       PROPERTY MANAGEMENT SYSTEM\n";
     cout << "========================================\n";
 
-    if (sqlite3_open("database/property_management.db", &db) != SQLITE_OK) {
-        cerr << "Could not open database.\n";
-        return 1;
-    }
+    if (!database.connect("database/property_management.db")) {
+    cerr << "Could not open database.\n";
+    return 1;
+}
 
     if (!initializeDatabase()) {
         cerr << "Database initialization failed.\n";
-        sqlite3_close(db);
         return 1;
     }
 
@@ -752,7 +752,6 @@ int main() {
             running = false;
     }
 
-    sqlite3_close(db);
     cout << "\nThank you for using the system!\n";
 
     return 0;
