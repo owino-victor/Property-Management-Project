@@ -1,22 +1,46 @@
-# Build output
+# C++ build output
 build/
 cmake-build-*/
 
-# Executables and object files
+# C++ executables and object files
 *.exe
 *.o
 *.obj
 *.dll
 *.a
 
-# Local databases and SQLite files
+# Local databases
 *.db
 *.sqlite
 *.sqlite3
 *.db-wal
 *.db-shm
 
-# Editor and OS files
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Frontend
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# Editors and operating systems
 .vscode/
 .idea/
 .DS_Store
