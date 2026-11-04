@@ -13,10 +13,13 @@ import {
   Clock3,
   CheckCircle2,
   ArrowRight,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 import {
   login,
+  getUsernameSuggestions,
   getCurrentUser,
   getDashboard,
   logout,
@@ -104,6 +107,46 @@ function LoginScreen({
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    const query = email.trim();
+
+    if (!query) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const results = await getUsernameSuggestions(query);
+
+        if (!cancelled) {
+          setSuggestions(
+            results.filter(
+              (item) => item.toLowerCase() !== query.toLowerCase(),
+            ),
+          );
+          setShowSuggestions(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      }
+    }, 150);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [email]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -154,30 +197,71 @@ function LoginScreen({
             <label className="mb-1 block text-sm font-medium text-slate-700">
               Email address
             </label>
-            <input
-              className="input-field"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@example.com"
-              autoComplete="username"
-              required
-            />
+            <div className="relative">
+              <input
+                className="input-field"
+                type="email"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => {
+                  window.setTimeout(() => setShowSuggestions(false), 150);
+                }}
+                placeholder="you@example.com"
+                autoComplete="username"
+                required
+              />
+
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="suggestion-list" role="listbox">
+                  {suggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      className="suggestion-item"
+                      role="option"
+                      aria-selected={false}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        setEmail(suggestion);
+                        setShowSuggestions(false);
+                      }}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
               Password
             </label>
-            <input
-              className="input-field"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Enter your password"
-              autoComplete="current-password"
-              required
-            />
+            <div className="password-input-wrap">
+              <input
+                className="input-field"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button className="primary-button w-full" disabled={loading}>

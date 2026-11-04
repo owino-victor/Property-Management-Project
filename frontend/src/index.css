@@ -1,28 +1,30 @@
 @import "tailwindcss";
 
 @theme {
-  --color-slate-50: #fbf8f2;
-  --color-slate-100: #f2ece1;
-  --color-slate-200: #e5dccd;
-  --color-slate-300: #d3c7b5;
-  --color-slate-400: #a99d8d;
-  --color-slate-500: #81786c;
-  --color-slate-600: #625e53;
-  --color-slate-700: #494b40;
-  --color-slate-800: #303b35;
-  --color-slate-900: #254b3b;
-  --color-slate-950: #1b3329;
+  /* Haven's neutral foundation */
+  --color-slate-50: #faf8f4;
+  --color-slate-100: #f1ede5;
+  --color-slate-200: #e2dbcf;
+  --color-slate-300: #d0c5b5;
+  --color-slate-400: #a99b89;
+  --color-slate-500: #807466;
+  --color-slate-600: #62594f;
+  --color-slate-700: #49463e;
+  --color-slate-800: #303c37;
+  --color-slate-900: #244b3b;
+  --color-slate-950: #173429;
 
-  --color-blue-50: #f7eee7;
-  --color-blue-100: #f0dfd1;
-  --color-blue-200: #e7c9b2;
-  --color-blue-300: #d9a46b;
-  --color-blue-400: #d18b5c;
-  --color-blue-500: #c7795b;
-  --color-blue-600: #254b3b;
-  --color-blue-700: #1e3d30;
-  --color-blue-800: #193329;
-  --color-blue-900: #14291f;
+  /* Teal replaces the old blue action palette */
+  --color-blue-50: #eaf4f3;
+  --color-blue-100: #d5e9e6;
+  --color-blue-200: #b4d8d3;
+  --color-blue-300: #83bdb5;
+  --color-blue-400: #579f96;
+  --color-blue-500: #35877e;
+  --color-blue-600: #246f67;
+  --color-blue-700: #1d5a54;
+  --color-blue-800: #194943;
+  --color-blue-900: #153d39;
 }
 
 :root {
@@ -34,13 +36,12 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  color: #303b35;
-  background: #f6f1e8;
+  color: #303c37;
+  background: #f6f3ed;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
   font-optical-sizing: auto;
   scroll-behavior: smooth;
 }
@@ -56,10 +57,10 @@ body {
   background:
     radial-gradient(
       ellipse at 90% 0%,
-      rgba(217, 164, 107, 0.1),
+      rgba(201, 132, 100, 0.1),
       transparent 34rem
     ),
-    #f6f1e8;
+    #f6f3ed;
 }
 
 button,
@@ -77,13 +78,13 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 3px solid rgba(217, 164, 107, 0.45);
+  outline: 3px solid rgba(53, 135, 126, 0.35);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: #d9a46b;
-  color: #1b3329;
+  background: #d5e9e6;
+  color: #173429;
 }
 
 #root {
@@ -92,7 +93,7 @@ select:focus-visible {
 
 @layer components {
   .panel {
-    @apply min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6;
+    @apply min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6;
     transition:
       box-shadow 180ms ease,
       border-color 180ms ease,
@@ -100,8 +101,8 @@ select:focus-visible {
   }
 
   .panel:hover {
-    @apply border-slate-300;
-    box-shadow: 0 12px 30px rgba(48, 59, 53, 0.055);
+    border-color: #cfc5b7;
+    box-shadow: 0 12px 30px rgba(48, 60, 55, 0.07);
   }
 
   .input-field {
@@ -109,7 +110,7 @@ select:focus-visible {
   }
 
   .primary-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .secondary-button {
@@ -117,7 +118,109 @@ select:focus-visible {
   }
 }
 
-/* Keep long content inside its panels instead of letting it escape. */
+/* Stronger visual identity for operational records */
+.request-card,
+.notice-card {
+  border: 1px solid #e3dbce;
+  border-radius: 1rem;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 2px 5px rgba(48, 60, 55, 0.025);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.request-card {
+  border-left: 4px solid #579f96;
+}
+
+.notice-card {
+  border-left: 4px solid #c98464;
+}
+
+.request-card:hover,
+.notice-card:hover {
+  border-color: #c9bba8;
+  box-shadow: 0 8px 20px rgba(48, 60, 55, 0.06);
+}
+
+.response-card {
+  border: 1px solid #cfe2df;
+  border-left: 4px solid #35877e;
+  border-radius: 0.75rem;
+  background: #edf5f3;
+  padding: 0.85rem 1rem;
+}
+
+.response-card p:first-child {
+  color: #246f67;
+}
+
+.response-card p:last-child {
+  color: #344c48;
+}
+
+/* Login autocomplete */
+.suggestion-list {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  max-height: 12rem;
+  overflow-y: auto;
+  border: 1px solid #ded5c8;
+  border-radius: 0.85rem;
+  background: white;
+  padding: 0.35rem;
+  box-shadow: 0 12px 30px rgba(35, 52, 44, 0.13);
+}
+
+.suggestion-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 0.6rem;
+  padding: 0.7rem 0.75rem;
+  color: #394b43;
+  text-align: left;
+  font-size: 0.85rem;
+  transition: background 120ms ease;
+}
+
+.suggestion-item:hover,
+.suggestion-item:focus-visible {
+  background: #edf5f3;
+  outline: none;
+}
+
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input-wrap .input-field {
+  padding-right: 3.1rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.85rem;
+  display: inline-flex;
+  transform: translateY(-50%);
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  color: #807466;
+}
+
+.password-toggle:hover {
+  color: #246f67;
+}
+
 main,
 aside,
 section,
@@ -148,7 +251,6 @@ table {
       opacity: 0;
       transform: translateY(7px);
     }
-
     to {
       opacity: 1;
       transform: translateY(0);

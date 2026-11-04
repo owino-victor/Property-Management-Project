@@ -9,6 +9,8 @@ import {
   Pencil,
   Trash2,
   Save,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   getHouses,
@@ -284,6 +286,7 @@ export function TenantsPage({ user }: { user: User }) {
   const [phone, setPhone] = useState("");
   const [houseId, setHouseId] = useState("");
   const [password, setPassword] = useState("");
+  const [showInitialPassword, setShowInitialPassword] = useState(false);
 
   const [editFullName, setEditFullName] = useState("");
   const [editEmail, setEditEmail] = useState("");
@@ -537,15 +540,36 @@ export function TenantsPage({ user }: { user: User }) {
               <label className="mb-1 block text-sm font-medium">
                 Initial password
               </label>
-              <input
-                className="input-field"
-                type="password"
-                minLength={8}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="At least 8 characters"
-                required
-              />
+              <div className="password-input-wrap">
+                <input
+                  className="input-field"
+                  type={showInitialPassword ? "text" : "password"}
+                  minLength={8}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="At least 8 characters"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() =>
+                    setShowInitialPassword((current) => !current)
+                  }
+                  aria-label={
+                    showInitialPassword ? "Hide password" : "Show password"
+                  }
+                  title={
+                    showInitialPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  {showInitialPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 

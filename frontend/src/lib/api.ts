@@ -51,6 +51,13 @@ export async function login(email: string, password: string) {
   return response.data;
 }
 
+export async function getUsernameSuggestions(query: string) {
+  const response = await api.get<string[]>("/auth/suggestions", {
+    params: { q: query },
+  });
+  return response.data;
+}
+
 export async function getCurrentUser() {
   const response = await api.get("/auth/me");
   return response.data as LoginResponse["user"];

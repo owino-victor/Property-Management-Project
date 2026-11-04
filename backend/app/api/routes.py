@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy import delete, func, select
@@ -141,6 +141,28 @@ def tenant_profile_for(db: Session, user: User) -> TenantProfile:
 
 
 # ---------- Authentication ----------
+
+
+@router.get("/auth/suggestions", response_model=list[str])
+def account_suggestions(
+    q: str = Query(min_length=1, max_length=80),
+    db: Session = Depends(get_db),
+):
+    """Local demonstration helper for login autocomplete."""
+    prefix = q.strip().lower()
+
+    if not prefix:
+        return []
+
+    return db.scalars(
+        select(User.email)
+        .where(
+            User.is_active.is_(True),
+            func.lower(User.email).startswith(prefix),
+        )
+        .order_by(User.email)
+        .limit(6)
+    ).all()
 
 
 @router.post("/auth/login")
